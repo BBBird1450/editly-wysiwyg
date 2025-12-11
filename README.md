@@ -5,7 +5,7 @@ A lightweight, contextual WYSIWYG editor for React applications with advanced fe
 [![npm version](https://img.shields.io/npm/v/editly-wysiwyg.svg)](https://www.npmjs.com/package/editly-wysiwyg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-[Live Demo](https://bbbbird1450.github.io/editly-wysiwyg/) | [Documentation](https://github.com/BBBird1450/editly-wysiwyg#readme) | [NPM Package](https://www.npmjs.com/package/editly-wysiwyg)
+[Live Demo](https://bbbird1450.github.io/editly-wysiwyg/) | [Documentation](https://github.com/BBBird1450/editly-wysiwyg#readme) | [NPM Package](https://www.npmjs.com/package/editly-wysiwyg)
 
 ## Features
 

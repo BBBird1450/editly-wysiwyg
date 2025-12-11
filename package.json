@@ -1,6 +1,6 @@
 {
   "name": "editly-wysiwyg",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight, contextual WYSIWYG editor for React with advanced features",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

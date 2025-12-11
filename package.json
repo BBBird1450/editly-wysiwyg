@@ -1,0 +1,56 @@
+{
+  "name": "editly-wysiwyg",
+  "version": "1.0.0",
+  "description": "A lightweight, contextual WYSIWYG editor for React with advanced features",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "wysiwyg",
+    "editor",
+    "react",
+    "rich-text",
+    "contenteditable",
+    "text-editor",
+    "html-editor",
+    "contextual-toolbar",
+    "seo",
+    "react-component"
+  ],
+  "author": "BBBird1450 <BBBird1450@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BBBird1450/editly-wysiwyg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BBBird1450/editly-wysiwyg/issues"
+  },
+  "homepage": "https://github.com/BBBird1450/editly-wysiwyg#readme",
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "rollup": "^4.9.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "katex": "^0.16.27",
+    "tslib": "^2.6.2"
+  }
+}

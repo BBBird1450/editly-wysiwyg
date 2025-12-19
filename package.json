@@ -1,6 +1,6 @@
 {
   "name": "editly-wysiwyg",
-  "version": "1.0.3",
+  "version": "1.3.0",
   "description": "A lightweight, contextual WYSIWYG editor for React with advanced features",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -39,7 +39,8 @@
   },
   "homepage": "https://github.com/BBBird1450/editly-wysiwyg#readme",
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",

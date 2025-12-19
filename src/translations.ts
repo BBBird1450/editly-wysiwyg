@@ -74,7 +74,13 @@ export const translations = {
     template2Rows: '2 Rows',
     templateMediaObject: 'Image + Text',
     templateCentered: 'Centered',
-    templateHero: 'Hero Section'
+    templateHero: 'Hero Section',
+    update: 'Update',
+    back: 'Back',
+    customizeLayout: 'Customize Layout',
+    latexFormula: 'LaTeX Formula',
+    preview: 'Preview',
+    enterFormulaAbove: 'Enter formula above'
   },
   es: {
     bold: 'Negrita',
@@ -151,7 +157,13 @@ export const translations = {
     template2Rows: '2 Filas',
     templateMediaObject: 'Imagen + Texto',
     templateCentered: 'Centrado',
-    templateHero: 'Sección Hero'
+    templateHero: 'Sección Hero',
+    update: 'Actualizar',
+    back: 'Atrás',
+    customizeLayout: 'Personalizar Diseño',
+    latexFormula: 'Fórmula LaTeX',
+    preview: 'Vista Previa',
+    enterFormulaAbove: 'Ingrese la fórmula arriba'
   },
   fr: {
     bold: 'Gras',
@@ -228,7 +240,13 @@ export const translations = {
     template2Rows: '2 Rangées',
     templateMediaObject: 'Image + Texte',
     templateCentered: 'Centré',
-    templateHero: 'Section Héro'
+    templateHero: 'Section Héro',
+    update: 'Mettre à jour',
+    back: 'Retour',
+    customizeLayout: 'Personnaliser la Mise en Page',
+    latexFormula: 'Formule LaTeX',
+    preview: 'Aperçu',
+    enterFormulaAbove: 'Entrez la formule ci-dessus'
   },
   de: {
     bold: 'Fett',
@@ -305,7 +323,13 @@ export const translations = {
     template2Rows: '2 Zeilen',
     templateMediaObject: 'Bild + Text',
     templateCentered: 'Zentriert',
-    templateHero: 'Hero-Bereich'
+    templateHero: 'Hero-Bereich',
+    update: 'Aktualisieren',
+    back: 'Zurück',
+    customizeLayout: 'Layout Anpassen',
+    latexFormula: 'LaTeX-Formel',
+    preview: 'Vorschau',
+    enterFormulaAbove: 'Formel oben eingeben'
   },
   it: {
     bold: 'Grassetto',
@@ -382,7 +406,13 @@ export const translations = {
     template2Rows: '2 Righe',
     templateMediaObject: 'Immagine + Testo',
     templateCentered: 'Centrato',
-    templateHero: 'Sezione Hero'
+    templateHero: 'Sezione Hero',
+    update: 'Aggiorna',
+    back: 'Indietro',
+    customizeLayout: 'Personalizza Layout',
+    latexFormula: 'Formula LaTeX',
+    preview: 'Anteprima',
+    enterFormulaAbove: 'Inserisci la formula sopra'
   },
   pl: {
     bold: 'Pogrubienie',
@@ -459,7 +489,13 @@ export const translations = {
     template2Rows: '2 Wiersze',
     templateMediaObject: 'Obraz + Tekst',
     templateCentered: 'Wyśrodkowany',
-    templateHero: 'Sekcja Hero'
+    templateHero: 'Sekcja Hero',
+    update: 'Aktualizuj',
+    back: 'Wstecz',
+    customizeLayout: 'Dostosuj Układ',
+    latexFormula: 'Formuła LaTeX',
+    preview: 'Podgląd',
+    enterFormulaAbove: 'Wprowadź formułę powyżej'
   },
   fa: {
     bold: 'پررنگ',
@@ -536,7 +572,13 @@ export const translations = {
     template2Rows: '۲ سطر',
     templateMediaObject: 'تصویر + متن',
     templateCentered: 'متمرکز',
-    templateHero: 'بخش هیرو (Hero)'
+    "templateHero": "بخش هیرو",
+    "update": "به‌روزرسانی",
+    "back": "بازگشت",
+    "customizeLayout": "شخصی‌سازی چیدمان",
+    "latexFormula": "فرمول لاتک",
+    "preview": "پیش‌نمایش",
+    "enterFormulaAbove": "فرمول را در بالا وارد کنید"
   }
 };
 

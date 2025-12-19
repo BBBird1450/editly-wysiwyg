@@ -35,6 +35,8 @@ export interface WysiwygEditorProps {
   storageKey?: string;
   autoSave?: boolean;
   id?: string;
+  readOnly?: boolean;
+  disabled?: boolean;
   labels?: {
     bold?: string;
     italic?: string;
@@ -120,7 +122,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   mode = 'contextual',
   placeholder = 'Start typing...',
   iconSet = 'outline',
-  tools: enabledTools = ['bold', 'italic', 'underline', 'createLink', 'header', 'insertUnorderedList', 'insertOrderedList', 'insertHorizontalRule', 'insertImage', 'quote', 'code', 'table', 'textColor', 'backgroundColor', 'fontSize', 'align', 'undo', 'redo', 'viewSource'],
+  tools: enabledTools = ['bold', 'italic', 'underline', 'strikethrough', 'createLink', 'header', 'insertUnorderedList', 'insertOrderedList', 'indent', 'outdent', 'insertHorizontalRule', 'insertImage', 'quote', 'code', 'table', 'textColor', 'backgroundColor', 'fontSize', 'fontFamily', 'align', 'removeFormat', 'undo', 'redo', 'viewSource', 'fullscreen'],
   minHeight = '200px',
   autoResize = false,
   imageUploadUrl,
@@ -141,7 +143,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   labels = {},
   storageKey,
   autoSave = false,
-  id
+  id,
+  readOnly = false,
+  disabled = false
 }) => {
   const themeColors = { ...defaultTheme, ...theme };
   const defaultLabels = {
@@ -182,7 +186,15 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     exportText: 'Export as Text',
     exportMarkdown: 'Export as Markdown',
     math: 'Math Formula',
-    insertMath: 'Insert Math Formula'
+    insertMath: 'Insert Math Formula',
+    editImage: 'Edit Image',
+    update: 'Update',
+    insertLayoutBlock: 'Insert Layout Block',
+    back: 'Back',
+    customizeLayout: 'Customize Layout',
+    latexFormula: 'LaTeX Formula',
+    preview: 'Preview',
+    enterFormulaAbove: 'Enter formula above'
   };
   
   const t = lang ? { ...defaultLabels, ...translations[lang], ...labels } : { ...defaultLabels, ...labels };
@@ -220,8 +232,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colorPickerType, setColorPickerType] = useState('');
   const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
+  const [showFontFamilyDropdown, setShowFontFamilyDropdown] = useState(false);
   const [showTableDropdown, setShowTableDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isExitingFullscreen, setIsExitingFullscreen] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showMathModal, setShowMathModal] = useState(false);
   const [mathFormula, setMathFormula] = useState('');
@@ -231,8 +246,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   const [flexPadding, setFlexPadding] = useState('15px');
   const [flexBorder, setFlexBorder] = useState('2px dashed #d1d5db');
   const editorRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const clickTimeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
@@ -294,17 +309,21 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   };
 
   const getIcon = (toolName: string) => {
-    return customIcons[toolName] || icons[iconSet][toolName] || icons[iconSet].viewSource;
+    type IconKey = keyof typeof icons.outline;
+    return customIcons[toolName] || icons[iconSet][toolName as IconKey] || icons[iconSet].viewSource;
   };
 
-  const allTools = {
+  const allTools: Record<string, any> = {
     bold: { cmd: 'bold', icon: getIcon('bold'), title: t.bold },
     italic: { cmd: 'italic', icon: getIcon('italic'), title: t.italic },
     underline: { cmd: 'underline', icon: getIcon('underline'), title: t.underline },
+    strikethrough: { cmd: 'strikethrough', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>, title: 'Strikethrough' },
     createLink: { cmd: 'createLink', icon: getIcon('link'), title: t.link },
     header: { cmd: 'header', icon: getIcon('header'), title: t.headers, dropdown: true },
     insertUnorderedList: { cmd: 'insertUnorderedList', icon: getIcon('ul'), title: t.bulletList },
     insertOrderedList: { cmd: 'insertOrderedList', icon: getIcon('ol'), title: t.numberList },
+    indent: { cmd: 'indent', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zM3 8v8l4-4-4-4zm8 9h10v-2H11v2zM3 3v2h18V3H3zm8 6h10V7H11v2zm0 4h10v-2H11v2z"/></svg>, title: 'Indent' },
+    outdent: { cmd: 'outdent', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11 17h10v-2H11v2zm-8-5l4 4V8l-4 4zm0 9h18v-2H3v2zM3 3v2h18V3H3zm8 6h10V7H11v2zm0 4h10v-2H11v2z"/></svg>, title: 'Outdent' },
     insertHorizontalRule: { cmd: 'insertHorizontalRule', icon: getIcon('hr'), title: t.horizontalRule },
     insertImage: { cmd: 'insertImage', icon: getIcon('img'), title: t.image },
     quote: { cmd: 'quote', icon: getIcon('quote'), title: t.quote },
@@ -313,10 +332,13 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     textColor: { cmd: 'foreColor', icon: getIcon('textColor'), title: t.textColor, colorPicker: true },
     backgroundColor: { cmd: 'backColor', icon: getIcon('backgroundColor'), title: t.backgroundColor, colorPicker: true },
     fontSize: { cmd: 'fontSize', icon: getIcon('fontSize'), title: t.fontSize, dropdown: true },
+    fontFamily: { cmd: 'fontName', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/></svg>, title: 'Font Family', dropdown: true },
     align: { cmd: 'align', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v2H3V3zm0 4h12v2H3V7zm0 4h18v2H3v-2zm0 4h12v2H3v-2zm0 4h18v2H3v-2z"/></svg>, title: 'Align', dropdown: true },
+    removeFormat: { cmd: 'removeFormat', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 8V5H6.39l3 3h1.83l-.55 1.28 2.09 2.09L14.21 8zM3.41 4.86L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21l1.41-1.41z"/></svg>, title: 'Clear Formatting' },
     undo: { cmd: 'undo', icon: getIcon('undo'), title: t.undo },
     redo: { cmd: 'redo', icon: getIcon('redo'), title: t.redo },
     viewSource: { cmd: 'viewSource', icon: getIcon('viewSource'), title: t.viewSource },
+    fullscreen: { cmd: 'fullscreen', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>, title: 'Fullscreen' },
     math: { cmd: 'math', icon: getIcon('math'), title: t.math },
     exportOptions: { cmd: 'exportOptions', icon: getIcon('exportOptions'), title: t.exportOptions },
     flexBlock: { cmd: 'flexBlock', icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>, title: 'Flex Block' }
@@ -377,14 +399,12 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   };
 
   const execCommand = (cmd: string, value?: string) => {
-    // Check if cursor is inside code block
     const selection = window.getSelection();
     if (selection?.rangeCount) {
-      let element = selection.getRangeAt(0).commonAncestorContainer;
-      if (element.nodeType === Node.TEXT_NODE) element = element.parentElement;
+      let element: Node | HTMLElement | null = selection.getRangeAt(0).commonAncestorContainer;
+      if ((element as Node).nodeType === Node.TEXT_NODE) element = (element as Node).parentElement;
       
-      // Disable formatting inside code blocks
-      if (element && (element.closest('pre') || element.closest('code')) && 
+      if (element && ((element as HTMLElement)?.closest?.('pre') || (element as HTMLElement)?.closest?.('code')) && 
           !['viewSource', 'undo', 'redo'].includes(cmd)) {
         return;
       }
@@ -426,20 +446,34 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     } else if (cmd === 'fontSize') {
       setShowFontSizeDropdown(!showFontSizeDropdown);
       setShowHeaderDropdown(false);
+      setShowFontFamilyDropdown(false);
+    } else if (cmd === 'fontName') {
+      setShowFontFamilyDropdown(!showFontFamilyDropdown);
+      setShowHeaderDropdown(false);
+      setShowFontSizeDropdown(false);
+    } else if (cmd === 'fullscreen') {
+      if (isFullscreen) {
+        setIsExitingFullscreen(true);
+        setTimeout(() => {
+          setIsFullscreen(false);
+          setIsExitingFullscreen(false);
+        }, 200);
+      } else {
+        setIsFullscreen(true);
+      }
     } else if (cmd === 'tableHeader') {
-      // Toggle table header
       const selection = window.getSelection();
       if (selection?.rangeCount) {
         const range = selection.getRangeAt(0);
-        let cell = range.commonAncestorContainer;
-        while (cell && cell.nodeName !== 'TD' && cell.nodeName !== 'TH') {
-          cell = cell.parentNode;
+        let cell: Node | HTMLElement | null = range.commonAncestorContainer;
+        while (cell && (cell as HTMLElement).nodeName !== 'TD' && (cell as HTMLElement).nodeName !== 'TH') {
+          cell = (cell as Node).parentNode;
         }
-        if (cell) {
-          const newTag = cell.nodeName === 'TD' ? 'th' : 'td';
+        if (cell && (cell as Node).parentNode) {
+          const newTag = (cell as HTMLElement).nodeName === 'TD' ? 'th' : 'td';
           const newCell = document.createElement(newTag);
-          newCell.innerHTML = cell.innerHTML;
-          cell.parentNode?.replaceChild(newCell, cell);
+          newCell.innerHTML = (cell as HTMLElement).innerHTML;
+          (cell as Node).parentNode!.replaceChild(newCell, cell as Node);
         }
       }
       editorRef.current?.focus();
@@ -472,7 +506,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         
         const range = savedRangeRef.current;
         
-        // Check if we have an image selected
         const container = range.commonAncestorContainer;
         let imgElement: HTMLImageElement | null = null;
         
@@ -487,27 +520,23 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
           imgElement = container.parentElement as HTMLImageElement;
         }
         
-        // Also check range contents
         if (!imgElement) {
           const contents = range.cloneContents();
           imgElement = contents.querySelector('img');
         }
         
         if (imgElement) {
-          // Wrap image in anchor tag
           const anchor = document.createElement('a');
           anchor.href = value;
           const extracted = range.extractContents();
           anchor.appendChild(extracted);
           range.insertNode(anchor);
           
-          // Move cursor after the link
           range.setStartAfter(anchor);
           range.collapse(true);
           selection?.removeAllRanges();
           selection?.addRange(range);
         } else {
-          // Use execCommand for text
           document.execCommand('createLink', false, value);
         }
       } else {
@@ -523,12 +552,10 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   const handleInput = () => {
     let html = editorRef.current?.innerHTML || '';
     
-    // Wrap initial text in paragraph if not already wrapped
     if (html && !html.startsWith('<') && html.trim()) {
       html = `<p>${html}</p>`;
       editorRef.current!.innerHTML = html;
       
-      // Restore cursor to end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(editorRef.current!);
@@ -536,6 +563,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       sel?.removeAllRanges();
       sel?.addRange(range);
     }
+    
+    html = html.replace(/<p>(<[ou]l>.*?<\/[ou]l>)<\/p>/gi, '$1');
+    html = html.replace(/<p>(<[ou]l>)/gi, '$1').replace(/(<\/[ou]l>)<\/p>/gi, '$1');
     
     setContent(html);
     onChange?.(html);
@@ -605,7 +635,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
 
   useEffect(() => {
     if (editorRef.current) {
-      // Force paragraph creation
       document.execCommand('defaultParagraphSeparator', false, 'p');
     }
   }, []);
@@ -621,12 +650,52 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         setShowAlignDropdown(false);
       }
     };
+    
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setModalOpen(false);
+        setShowImageModal(false);
+        setShowTableModal(false);
+        setShowExportModal(false);
+        setShowMathModal(false);
+        setShowFlexModal(false);
+        setShowHeaderDropdown(false);
+        setShowFontSizeDropdown(false);
+        setShowFontFamilyDropdown(false);
+        setShowTableDropdown(false);
+        setShowColorPicker(false);
+        setShowAlignDropdown(false);
+        if (isFullscreen) {
+          setIsExitingFullscreen(true);
+          setTimeout(() => {
+            setIsFullscreen(false);
+            setIsExitingFullscreen(false);
+          }, 200);
+        }
+      }
+    };
+    
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen]);
 
   return (
-    <div className={`relative ${
+    <div className={`${isFullscreen || isExitingFullscreen ? 'fixed inset-0 z-50 bg-white overflow-auto' : 'relative'} ${isFullscreen && !isExitingFullscreen ? 'animate-fadeIn' : ''} ${isExitingFullscreen ? 'animate-fadeOut' : ''} ${
       mode === 'full' && (toolbarPosition === 'left' || toolbarPosition === 'right') ? 'flex' : ''
     } ${
       mode === 'full' && toolbarPosition === 'right' ? 'flex-row-reverse' : ''
@@ -686,8 +755,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                     }}
                     className="px-3 py-2 rounded transition-colors border border-transparent"
                     style={{ color: themeColors.text, background: themeColors.toolbarBg }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = themeColors.toolbarHover}
-                    onMouseLeave={(e) => e.currentTarget.style.background = themeColors.toolbarBg}
+                    onMouseEnter={(e) => e.currentTarget.style.background = themeColors.toolbarHover || ''}
+                    onMouseLeave={(e) => e.currentTarget.style.background = themeColors.toolbarBg || ''}
                     title={tool.title}
                     type="button"
                   >
@@ -739,6 +808,24 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                       ))}
                     </div>
                   )}
+                  {showFontFamilyDropdown && tool.dropdown && tool.cmd === 'fontName' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-20 min-w-32 animate-slideDown">
+                      {['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Verdana'].map(font => (
+                        <button
+                          key={font}
+                          onClick={() => {
+                            document.execCommand('fontName', false, font);
+                            setShowFontFamilyDropdown(false);
+                            editorRef.current?.focus();
+                          }}
+                          className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                          style={{ fontFamily: font }}
+                        >
+                          {font}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {showTableDropdown && tool.cmd === 'table' && (
                     <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-20 min-w-40 animate-slideDown">
                       <button onClick={() => {
@@ -751,13 +838,13 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                         const selection = window.getSelection();
                         if (selection?.rangeCount) {
                           const range = selection.getRangeAt(0);
-                          let cell = range.commonAncestorContainer;
-                          while (cell && cell.nodeName !== 'TD' && cell.nodeName !== 'TH') cell = cell.parentNode;
-                          if (cell) {
-                            const newTag = cell.nodeName === 'TD' ? 'th' : 'td';
+                          let cell: Node | HTMLElement | null = range.commonAncestorContainer;
+                          while (cell && (cell as HTMLElement).nodeName !== 'TD' && (cell as HTMLElement).nodeName !== 'TH') cell = (cell as Node).parentNode;
+                          if (cell && (cell as Node).parentNode) {
+                            const newTag = (cell as HTMLElement).nodeName === 'TD' ? 'th' : 'td';
                             const newCell = document.createElement(newTag);
-                            newCell.innerHTML = cell.innerHTML;
-                            cell.parentNode?.replaceChild(newCell, cell);
+                            newCell.innerHTML = (cell as HTMLElement).innerHTML;
+                            (cell as Node).parentNode!.replaceChild(newCell, cell as Node);
                           }
                         }
                         setShowTableDropdown(false);
@@ -769,11 +856,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                         const selection = window.getSelection();
                         if (selection?.rangeCount) {
                           const range = selection.getRangeAt(0);
-                          let row = range.commonAncestorContainer;
-                          while (row && row.nodeName !== 'TR') row = row.parentNode;
+                          let row: Node | HTMLElement | null = range.commonAncestorContainer;
+                          while (row && (row as HTMLElement).nodeName !== 'TR') row = (row as Node).parentNode;
                           if (row) {
-                            const newRow = row.cloneNode(true);
-                            row.parentNode?.insertBefore(newRow, row.nextSibling);
+                            const newRow = (row as Node).cloneNode(true);
+                            (row as Node).parentNode?.insertBefore(newRow, (row as Node).nextSibling);
                           }
                         }
                         setShowTableDropdown(false);
@@ -785,10 +872,10 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                         const selection = window.getSelection();
                         if (selection?.rangeCount) {
                           const range = selection.getRangeAt(0);
-                          let row = range.commonAncestorContainer;
-                          while (row && row.nodeName !== 'TR') row = row.parentNode;
-                          if (row && row.parentNode?.children.length > 1) {
-                            row.parentNode?.removeChild(row);
+                          let row: Node | HTMLElement | null = range.commonAncestorContainer;
+                          while (row && (row as HTMLElement).nodeName !== 'TR') row = (row as Node).parentNode;
+                          if (row && (row as Node).parentNode && ((row as Node).parentNode as HTMLElement).children.length > 1) {
+                            (row as Node).parentNode?.removeChild(row as Node);
                           }
                         }
                         setShowTableDropdown(false);
@@ -800,14 +887,14 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                         const selection = window.getSelection();
                         if (selection?.rangeCount) {
                           const range = selection.getRangeAt(0);
-                          let cell = range.commonAncestorContainer;
-                          while (cell && cell.nodeName !== 'TD' && cell.nodeName !== 'TH') cell = cell.parentNode;
+                          let cell: Node | HTMLElement | null = range.commonAncestorContainer;
+                          while (cell && (cell as HTMLElement).nodeName !== 'TD' && (cell as HTMLElement).nodeName !== 'TH') cell = (cell as Node).parentNode;
                           if (cell) {
-                            const cellIndex = Array.from(cell.parentNode?.children || []).indexOf(cell);
-                            const table = cell.closest('table');
+                            const cellIndex = Array.from(((cell as Node).parentNode as HTMLElement)?.children || []).indexOf(cell as Element);
+                            const table = (cell as HTMLElement).closest('table');
                             if (table) {
-                              Array.from(table.rows).forEach(row => {
-                                const newCell = document.createElement(cell.nodeName.toLowerCase());
+                              Array.from(table.rows).forEach((row: HTMLTableRowElement) => {
+                                const newCell = document.createElement((cell as HTMLElement)!.nodeName.toLowerCase());
                                 newCell.textContent = 'Cell';
                                 if (row.cells[cellIndex + 1]) {
                                   row.insertBefore(newCell, row.cells[cellIndex + 1]);
@@ -827,13 +914,13 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                         const selection = window.getSelection();
                         if (selection?.rangeCount) {
                           const range = selection.getRangeAt(0);
-                          let cell = range.commonAncestorContainer;
-                          while (cell && cell.nodeName !== 'TD' && cell.nodeName !== 'TH') cell = cell.parentNode;
+                          let cell: Node | HTMLElement | null = range.commonAncestorContainer;
+                          while (cell && (cell as HTMLElement).nodeName !== 'TD' && (cell as HTMLElement).nodeName !== 'TH') cell = (cell as Node).parentNode;
                           if (cell) {
-                            const cellIndex = Array.from(cell.parentNode?.children || []).indexOf(cell);
-                            const table = cell.closest('table');
+                            const cellIndex = Array.from(((cell as Node).parentNode as HTMLElement)?.children || []).indexOf(cell as Element);
+                            const table = (cell as HTMLElement).closest('table');
                             if (table && table.rows[0]?.cells.length > 1) {
-                              Array.from(table.rows).forEach(row => {
+                              Array.from(table.rows).forEach((row: HTMLTableRowElement) => {
                                 if (row.cells[cellIndex]) {
                                   row.removeChild(row.cells[cellIndex]);
                                 }
@@ -883,8 +970,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                   }}
                   className="px-3 py-2 rounded transition-colors border border-transparent"
                   style={{ color: themeColors.text, background: themeColors.toolbarBg }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = themeColors.toolbarHover}
-                  onMouseLeave={(e) => e.currentTarget.style.background = themeColors.toolbarBg}
+                  onMouseEnter={(e) => e.currentTarget.style.background = themeColors.toolbarHover ?? ''}
+                  onMouseLeave={(e) => e.currentTarget.style.background = themeColors.toolbarBg ?? ''}
                   title={tool.title}
                   type="button"
                 >
@@ -903,9 +990,10 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                           const range = selection.getRangeAt(0);
                           const parentElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
                             ? range.commonAncestorContainer.parentElement 
-                            : range.commonAncestorContainer;
+                            : range.commonAncestorContainer as HTMLElement;
                           
-                          // Remove color styling
+                          if (!parentElement) return;
+                          
                           const walker = document.createTreeWalker(
                             parentElement,
                             NodeFilter.SHOW_ELEMENT,
@@ -914,14 +1002,15 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                           
                           let node;
                           while (node = walker.nextNode()) {
-                            if (node.tagName === 'SPAN') {
+                            const elem = node as HTMLElement;
+                            if (elem.tagName === 'SPAN') {
                               if (colorPickerType === 'foreColor') {
-                                node.style.color = '';
+                                elem.style.color = '';
                               } else if (colorPickerType === 'backColor') {
-                                node.style.backgroundColor = '';
+                                elem.style.backgroundColor = '';
                               }
-                              if (!node.style.cssText) {
-                                node.outerHTML = node.innerHTML;
+                              if (!elem.style.cssText) {
+                                elem.outerHTML = elem.innerHTML;
                               }
                             }
                           }
@@ -938,27 +1027,9 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                       <button
                         key={color}
                         onClick={() => {
-                          const selection = window.getSelection();
-                          if (selection?.rangeCount && !selection.isCollapsed) {
-                            const range = selection.getRangeAt(0);
-                            const span = document.createElement('span');
-                            if (colorPickerType === 'foreColor') {
-                              span.style.color = color;
-                            } else if (colorPickerType === 'backColor') {
-                              span.style.backgroundColor = color;
-                            }
-                            const contents = range.extractContents();
-                            span.appendChild(contents);
-                            range.insertNode(span);
-                            
-                            // Restore selection
-                            const newRange = document.createRange();
-                            newRange.selectNodeContents(span);
-                            selection.removeAllRanges();
-                            selection.addRange(newRange);
-                          }
-                          setShowColorPicker(false);
                           editorRef.current?.focus();
+                          document.execCommand(colorPickerType === 'foreColor' ? 'foreColor' : 'backColor', false, color);
+                          setShowColorPicker(false);
                         }}
                         className="w-6 h-6 border border-gray-300 rounded hover:scale-110 transition-transform"
                         style={{ backgroundColor: color }}
@@ -988,13 +1059,33 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         <div className="relative">
           <div
             ref={editorRef}
-            contentEditable
+            contentEditable={!readOnly && !disabled}
             onInput={() => {
               clearTimeout(clickTimeoutRef.current);
               if (mode === 'contextual') {
                 setShowToolbar(false);
               }
               handleInput();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace') {
+                const selection = window.getSelection();
+                if (selection?.rangeCount) {
+                  const range = selection.getRangeAt(0);
+                  if (range.collapsed && range.startOffset === 0) {
+                    let node: Node | HTMLElement | null = range.startContainer;
+                    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+                    if (node) {
+                      const li = (node as HTMLElement).closest('li');
+                      if (li && li.textContent?.trim() === '') {
+                        e.preventDefault();
+                        const isOrdered = li.closest('ol');
+                        document.execCommand(isOrdered ? 'insertOrderedList' : 'insertUnorderedList', false);
+                      }
+                    }
+                  }
+                }
+              }
             }}
             onMouseMove={handleMouseMove}
             onMouseLeave={() => {}}
@@ -1005,7 +1096,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
               if (target.tagName === 'IMG') {
                 const img = target as HTMLImageElement;
                 
-                // Select the image
                 const selection = window.getSelection();
                 const range = document.createRange();
                 range.selectNode(img);
@@ -1045,12 +1135,14 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             className="p-4 rounded-lg focus:outline-none focus:ring-2 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
             style={{
               border: `1px solid ${themeColors.border}`,
-              background: themeColors.background,
-              color: themeColors.text,
+              background: disabled ? '#f3f4f6' : themeColors.background,
+              color: disabled ? '#9ca3af' : themeColors.text,
               minHeight: autoResize ? 'auto' : minHeight,
               height: autoResize ? 'auto' : undefined,
               wordBreak: 'break-word',
-              whiteSpace: 'pre-wrap'
+              whiteSpace: 'pre-wrap',
+              opacity: disabled ? 0.6 : 1,
+              cursor: disabled ? 'not-allowed' : readOnly ? 'default' : 'text'
             }}
             onFocus={(e) => e.currentTarget.style.boxShadow = `0 0 0 2px ${themeColors.primary}33`}
             onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -1215,6 +1307,11 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        .animate-fadeOut { animation: fadeOut 0.2s ease-out; }
         @keyframes slideIn {
           from { transform: translateY(-20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
@@ -1247,7 +1344,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       {showImageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
           <div className="bg-white p-6 rounded-lg w-96 max-h-[85vh] overflow-y-auto animate-slideIn">
-            <h3 className="text-lg font-semibold mb-4">{editingImage ? 'Edit Image' : t.insertImage}</h3>
+            <h3 className="text-lg font-semibold mb-4">{editingImage ? t.editImage : t.insertImage}</h3>
             
             {editingImage ? (
               <div className="space-y-3">
@@ -1358,7 +1455,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                       setImageLink('');
                       setImageLink('');
                     }
-                  }} className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors">Update</button>
+                  }} className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors">{t.update}</button>
                   <button onClick={() => {
                     if (editingImage && window.confirm('Delete this image?')) {
                       const parentLink = editingImage.parentElement;
@@ -1704,7 +1801,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       {showFlexModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
           <div className="bg-white p-6 rounded-lg w-[500px] max-h-[85vh] overflow-y-auto animate-slideIn">
-            <h3 className="text-lg font-semibold mb-4">Insert Layout Block</h3>
+            <h3 className="text-lg font-semibold mb-4">{t.insertLayoutBlock}</h3>
             
             <div className="space-y-3">
               {!selectedTemplate ? (
@@ -1784,8 +1881,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between mb-3">
-                    <button onClick={() => setSelectedTemplate('')} className="text-sm text-blue-500 hover:text-blue-600">← Back</button>
-                    <span className="text-sm font-medium">Customize Layout</span>
+                    <button onClick={() => setSelectedTemplate('')} className="text-sm text-blue-500 hover:text-blue-600">← {t.back}</button>
+                    <span className="text-sm font-medium">{t.customizeLayout}</span>
                   </div>
                   
                   <div>
@@ -1879,7 +1976,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             <h3 className="text-lg font-semibold mb-4">{t.insertMath}</h3>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">LaTeX Formula:</label>
+              <label className="block text-sm font-medium mb-2">{t.latexFormula}:</label>
               <textarea
                 value={mathFormula}
                 onChange={(e) => setMathFormula(e.target.value)}
@@ -1889,7 +1986,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
             </div>
             
             <div className="mb-4 p-3 bg-gray-50 rounded border">
-              <div className="text-sm text-gray-600 mb-2">Preview:</div>
+              <div className="text-sm text-gray-600 mb-2">{t.preview}:</div>
               <div className="p-2 bg-white border rounded min-h-8 text-center">
                 {mathFormula ? (
                   <span 
@@ -1898,7 +1995,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
                     }}
                   />
                 ) : (
-                  <em className="text-gray-400">Enter formula above</em>
+                  <em className="text-gray-400">{t.enterFormulaAbove}</em>
                 )}
               </div>
             </div>

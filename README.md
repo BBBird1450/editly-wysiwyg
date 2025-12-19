@@ -29,7 +29,8 @@ A lightweight, contextual WYSIWYG editor for React applications with advanced fe
 
 ## Compatibility
 
-- **React**: 16.8+ (Hooks support required)
+- **React**: 16.8+ (Hooks support required) - Supports React 19
+- **Next.js**: Compatible with Next.js 13, 14, 15+
 - **Browsers**: Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
 - **TypeScript**: Full TypeScript support included
 - **Tailwind CSS**: Required for styling
@@ -135,14 +136,19 @@ function AdvancedEditor() {
 | `storageKey` | `string` | - | LocalStorage key for auto-save |
 | `autoSave` | `boolean` | `false` | Enable automatic localStorage persistence |
 | `id` | `string` | - | Unique identifier for the editor instance |
+| `readOnly` | `boolean` | `false` | Make editor non-editable (content visible but not modifiable) |
+| `disabled` | `boolean` | `false` | Disable editor completely with visual feedback |
 
 ## Available Tools
 
-- `bold`, `italic`, `underline` - Text formatting
+- `bold`, `italic`, `underline`, `strikethrough` - Text formatting
 - `textColor`, `backgroundColor` - Color tools with picker
 - `fontSize` - Font size selection
+- `fontFamily` - Font family selection (Arial, Courier New, Georgia, Times New Roman, Trebuchet MS, Verdana)
 - `header` - Headers H1-H6 and paragraph
 - `align` - Text alignment (left, center, right, justify)
+- `indent`, `outdent` - Text indentation
+- `removeFormat` - Clear all formatting
 - `createLink` - Link insertion
 - `insertUnorderedList`, `insertOrderedList` - Lists
 - `table` - Advanced table management
@@ -152,6 +158,7 @@ function AdvancedEditor() {
 - `insertHorizontalRule` - Horizontal lines
 - `math` - Math formula insertion (LaTeX support)
 - `flexBlock` - Prebuilt layout blocks with customization
+- `fullscreen` - Toggle fullscreen editing mode
 - `undo`, `redo` - History management
 - `viewSource` - HTML source toggle
 
@@ -249,6 +256,8 @@ import { WysiwygEditor, translations } from 'editly-wysiwyg';
 - **Transparent Overlay**: Contextual toolbar becomes transparent to avoid blocking content
 - **Auto-hide on Typing**: Toolbar disappears when user starts typing
 - **Click-to-Show**: Toolbar appears after brief delay when clicking without typing
+- **Smart List Exit**: Press backspace in empty list item to exit list mode
+- **Clean HTML Output**: Lists properly structured outside paragraph tags
 
 ## Styling
 

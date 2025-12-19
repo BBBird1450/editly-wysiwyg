@@ -1,0 +1,5 @@
+Persian (fa) - Add these after fontSize:
+strikethrough: 'خط خورده', indent: 'تورفتگی', outdent: 'کاهش تورفتگی', fontFamily: 'فونت', align: 'تراز', removeFormat: 'پاک کردن قالب', flexBlock: 'بلوک انعطافپذیر', fullscreen: 'تمام صفحه'
+
+Polish (pl) - Add these after fontSize:
+strikethrough: 'Przekreślenie', indent: 'Wcięcie', outdent: 'Zmniejsz wcięcie', fontFamily: 'Czcionka', align: 'Wyrównaj', removeFormat: 'Usuń formatowanie', flexBlock: 'Blok elastyczny', fullscreen: 'Pełny ekran'
